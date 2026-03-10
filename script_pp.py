@@ -1,16 +1,13 @@
-
-
 from pathlib import Path
-
 import torch
-import torchaudio
-import torchaudio.transforms as T
+import librosa
+import numpy as np
 
 # --------------------------- CONFIG ---------------------------------
 
 PROJECT_ROOT = Path(__file__).resolve().parent
-LIBRISPEECH_FLAC_ROOT = PROJECT_ROOT / "dataset" / "dev-clean"
-OUT_ROOT = PROJECT_ROOT / "dataset" / "dev-clean-raw20"
+LIBRISPEECH_FLAC_ROOT = PROJECT_ROOT / "dataset" / "LibriSpeech" / "dev-clean"
+OUT_ROOT = PROJECT_ROOT / "dataset" / "2d-data"
 
 TARGET_SR = 16_000
 
@@ -20,31 +17,18 @@ HOP_SEC = 0.020     # passo tra frame (metti 0.10 per 50% overlap, ecc.)
 FRAME_SAMPLES = int(FRAME_SEC * TARGET_SR)  # 0.20 * 16000 = 3200
 HOP_SAMPLES = int(HOP_SEC * TARGET_SR)
 
-
 # ------------------------ AUDIO UTILS -------------------------------
 
 def load_waveform_mono(path: Path, target_sr: int):
-    wav, sr = torchaudio.load(str(path))
-
-    # mono
-    if wav.shape[0] > 1:
-        wav = wav.mean(dim=0, keepdim=True)
-
-    # resample se necessario
-    if sr != target_sr:
-        resampler = T.Resample(sr, target_sr)
-        wav = resampler(wav)
-        sr = target_sr
-
-    return wav.squeeze(0), sr   # [samples]
-
+    """Carica waveform mono con librosa e resampling se necessario"""
+    wav, sr = librosa.load(str(path), sr=target_sr, mono=True)
+    return torch.from_numpy(wav), sr  # [samples]
 
 def wav_to_frames(signal: torch.Tensor) -> torch.Tensor:
     """
     signal: Tensor [num_samples]
     ritorna: Tensor [num_frames, FRAME_SAMPLES]
     """
-
     num_samples = signal.numel()
 
     if num_samples < FRAME_SAMPLES:
@@ -60,7 +44,6 @@ def wav_to_frames(signal: torch.Tensor) -> torch.Tensor:
 
     frames = signal.unfold(0, FRAME_SAMPLES, HOP_SAMPLES)  # [num_frames, FRAME_SAMPLES]
     return frames.contiguous()
-
 
 # ------------------------------ MAIN --------------------------------
 
@@ -94,7 +77,6 @@ def main():
         )
 
     print("Finito preprocessing raw 0.020 s.")
-
 
 if __name__ == "__main__":
     main()
