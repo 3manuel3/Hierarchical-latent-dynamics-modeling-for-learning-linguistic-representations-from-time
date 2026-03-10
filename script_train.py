@@ -171,7 +171,7 @@ def main():
     print("Inizializzo DCL (loader + solver, livello 0)...")
     loader, solver = build_dcl_pipeline_level0(dataset)
 
-    print("Inizio training DCL livello 0 (chunk 0.20 s)...")
+    print("Inizio training DCL livello 0 (chunk 0.020 s)...")
     solver.fit(loader)
 
     print("Calcolo predizioni (embeddings + dynamics) per livello 0...")
